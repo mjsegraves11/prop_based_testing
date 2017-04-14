@@ -8,9 +8,9 @@ class Queue(object):
     def enqueue(self, v): # adds v to the back of the queue; no return value
         if v is None:
             raise ValueError
-        if math.isnan(v) or math.isinf(v):
-            raise ValueError
-
+        if isinstance(v, float):
+            if math.isnan(v) or math.isinf(v):
+                raise ValueError
         self.q.append(v)
         print(self.q)
         pass

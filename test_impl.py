@@ -1,3 +1,6 @@
+# py.test -k "p2"
+#  py.test --timeout=10 --timeout_method=thread -k "v2"
+
 from impl import Queue
 import hypothesis.strategies as st
 from hypothesis import given
@@ -6,8 +9,16 @@ import math
 
 class TestQueue(object):
 
-    valid = st.lists(elements=(st.floats(allow_nan=False) | st.text() | st.integers() | st.booleans() | st.characters()))
+    valid = st.lists(elements=(st.floats(allow_infinity=False, allow_nan=False) | st.text() | st.integers() | st.booleans() | st.characters()))
     #invalid = st.lists(elements=(st.floats(allow_infinity=True, allow_nan=True) | st.text() | st.integers | st.booleans | st.characters))
+
+    def test_queue_init(self):
+        try:
+            queue = Queue()
+            assert True
+        except:
+            assert False
+        pass
 
     @pytest.mark.timeout(2, 'thread')
     def test_len_when_queue_init(self):
@@ -73,7 +84,6 @@ class TestQueue(object):
         except:
             assert False
 
-
     @pytest.mark.timeout(2, 'thread')
     def test_enqueue_with_invalid_input_Neg_Inf(self):
         queue = Queue()
@@ -85,55 +95,130 @@ class TestQueue(object):
         except:
             assert False
 
-    #1) If len() > 0 and x = pop(), then x was the last item pushed and remove x from stack
-    #2) If nothing has be placed on the stack, then len() = 0
-    #3) Calls to successful push should increment length by 1
-    #4) Calls to successful (non-None) pop should decrement length by 1
-    #5) Popping an empty stack returns None
-    #6) push(None) results in ValueError exception
-    #7) n number of successful pushes followed by n number of successful pops, values pushed should be observed in reverse order when popped
-    #8) len should always return non-negative integer
-    #9) Popping and empty stack doesn’t change length
-    #10) If len() > 0, then pop() return None
-    #11) Length of stack equals to # of successful pushes - # of successful pops
+    @pytest.mark.timeout(2, 'thread')
+    def test_first_element_in_is_first_element_out(self):
+        queue = Queue()
+        queue.enqueue(143)
+        queue.enqueue(2)
+        queue.enqueue(3)
+        try:
+            if queue.dequeue() is 143:
+                assert True
+            else:
+                assert False
+        except:
+            assert False
 
     @given(valid)
     @pytest.mark.timeout(2, 'thread')
-    def test(self, li):
-        #information for what to do for test
-
-        # 8====D~~~~ __/`````\`O
-
-        assert 1 > 0
+    def test_enqueue_element_increase_len_by_one(self, list):
+        queue = Queue()
+        length = queue.len()
+        try:
+            for element in list:
+                queue.enqueue(element)
+                if (length+1) is queue.len():
+                    length = length + 1
+                else:
+                    assert False
+            assert True
+        except:
+            assert False
         pass
 
+    @given(valid)
+    @pytest.mark.timeout(2, 'thread')
+    def test_dequeue_element_decrease_len_by_one(self, list):
+        queue = Queue()
+        for element in list:
+            queue.enqueue(element)
+        length = queue.len()
+        try:
+            for element in range(0, len(list)+5):
+                if(queue.dequeue() is None):
+                    if length is not queue.len():
+                        assert False
+                else:
+                    if (length-1) is queue.len():
+                        length = length - 1
+                    else:
+                        assert False
+            assert True
+        except:
+            assert False
+        pass
 
+    @given(valid)
+    @pytest.mark.timeout(2, 'thread')
+    def test_enqueue_list_dequeue_list_equals_list(self, list):
+        #push list onto queue
+        #dequeue list onto queue
+        #check that dequeued list is original list
+        queue = Queue()
+        newList = []
+        for element in list:
+            queue.enqueue(element)
+        for element in range(0,len(list)):
+            newList.append(queue.dequeue())
+        try:
+            if newList == list:
+                assert True
+            else:
+                assert False
+        except:
+            assert False
 
+        pass
 
+    @pytest.mark.timeout(2, 'thread')
+    def test_len_always_positive(self):
+        queue = Queue()
+        queue.enqueue(1)
+        for element in range(0,10):
+            queue.dequeue()
+        try:
+            if queue.len() < 0:
+                assert False
+            else:
+                assert True
+        except:
+            assert False
 
+    @pytest.mark.timeout(2, 'thread')
+    def test_dequeue_empty_queue_does_not_change_len(self):
+        queue = Queue()
+        while queue.len() > 0:
+            queue.dequeue()
+        length = queue.len()
+        if(length is 0):
+            try:
+                queue.dequeue()
+                if(length is not queue.len()):
+                    assert False
+                else:
+                    assert True
+            except:
+                assert False
+        else:
+            assert False
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    #11) Length of stack equals to # of successful pushes - # of successful pops
+    @given(valid)
+    @pytest.mark.timeout(2, 'thread')
+    def test_len_equals_enqueue_minus_dequeue(self, list):
+        queue = Queue()
+        length = queue.len()
+        try:
+            for element in list:
+                queue.enqueue(element)
+                if((length+1) is not queue.len()):
+                    assert False
+                length = length + 1
+            for element in list:
+                queue.dequeue()
+                if((length-1) is not queue.len()):
+                    assert False
+                length = length - 1
+            assert True
+        except:
+            assert False
